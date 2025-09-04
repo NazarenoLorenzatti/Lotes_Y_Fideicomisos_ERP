@@ -1,0 +1,11 @@
+<section class="m-8 border-round-2xl w-auto h-auto flex justify-content-center align-items-center">
+    <div class="btn-container w-8 h-auto flex flex-row flex-wrap justify-content-around">
+        <div class="btn flex" (click)="goTo('/contabilidad/asientos')">
+            Asientos Contables
+        </div>
+        <div class="btn flex" (click)="goTo('/contabilidad/cuentas')">
+            Cuentas Contables
+        </div>
+    </div>
+</section>
+<router-outlet></router-outlet>

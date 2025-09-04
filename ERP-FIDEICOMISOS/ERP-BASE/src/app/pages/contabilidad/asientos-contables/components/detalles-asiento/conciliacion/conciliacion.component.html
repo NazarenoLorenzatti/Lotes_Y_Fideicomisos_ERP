@@ -1,0 +1,38 @@
+<div class="w-10 h-auto flex flex-column justify-content-center align-items-center" >
+    <h2>{{conciliacion.descripcion}}</h2>
+            <p-table [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5, 10, 20]" [value]="conciliacion.detalles"
+                class="w-full h-auto" dataKey="id">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Id</th>
+                        <th>Estado</th>
+                        <th>Importe</th>
+                        <th>Id Mov</th>
+                        <th>Tipo Entidad</th>
+                        <th>Debe</th>
+                        <th>Haber</th>
+                        <th>Conciliado</th>
+                        <th>Nro Centa</th>
+                        <th>Cuenta</th>
+                        <th>Accion</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-det>
+                    <tr>
+                        <td>{{ det?.id }}</td>
+                        <td>{{ det?.estado}}</td>
+                        <td>{{ det?.importe}}</td>
+                        <td>{{ det?.movimiento.id}}</td>
+                        <td>{{ det?.movimiento.tipoEntidad?.nombre}}</td>
+                        <td>{{ det?.movimiento.debe }}</td>
+                        <td>{{ det?.movimiento.haber }}</td>
+                        <td>{{ det?.movimiento.conciliado }}</td>
+                        <td>{{ det?.movimiento.cuenta.codigo }}</td>
+                        <td>{{ det?.movimiento.cuenta.nombre }}</td>
+                        <td>
+                            <p-button (click)="desconciliarMovimiento(conciliacion.id)">Desconciliar</p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>

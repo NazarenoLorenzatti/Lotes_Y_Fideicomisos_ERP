@@ -1,0 +1,30 @@
+nav {
+    display: flex;
+}
+
+li {
+    display: inline-block;
+    list-style: outside none none;
+    cursor: pointer;
+    font-size: 18px;
+    color: black;
+    transition: all 0.3s;
+    opacity: 1;
+}
+
+li:hover {
+    font-size: 19px;
+    opacity: 0.8;
+}
+
+a {
+    text-decoration: none;
+    font-weight: 200;
+    color: black;
+}
+
+.logo-container {
+    height: 100px;
+    width: 200px;
+    background-color: rgba(255, 255, 255, 0.422);
+}
