@@ -1,0 +1,188 @@
+<div class="btn-container w-full h-auto p-6 flex justify-content-between align-items-center bg-red-400">
+    <div class="w-auto h-auto btn bg-black-alpha-10 flex justify-content-center align-items-center">
+        <div class="w-5rem h-5rem cursor-pointer" (click)="goTo('/facturacion')">
+            VOLVER
+        </div>
+    </div>
+</div>
+
+<app-tabla-contactos (contactoSeleccionado)="onSeleccionarCliente($event)"></app-tabla-contactos>
+
+<p-dialog *ngIf="contacto" header="Edit Profile" [modal]="true" [(visible)]="visible" [style]="{ width: 'auto' }">
+    <section class="w-full h-full flex flex-column justify-content-center align-items-center">
+        <div class="w-full h-full flex flex-column justify-content-center align-items-center">
+            <h1>CLIENTE: {{contacto?.razonSocial}}</h1>
+            <h1>Condicion Frente al IVA: {{contacto?.razonSocial}} </h1>
+            <h1>Numero Identificacion: {{contacto?.numeroDocumento}}</h1>
+        </div>
+        <div class="w-full f-auto flex flex-column">
+            <div class="img-container h-10rem w-10rem bg-black-alpha-40">
+                <img src="" />
+            </div>
+            <b>Razon Social: {{cuit.razonSocial || 'cargando'}}</b>
+            <b>Domicilio: {{cuit.direccionFiscal || 'cargando'}}</b>
+            <b>Localidad: Localidad<!--{{cuit.localidad}}--></b>
+            <b>Cuit: {{cuit.cuit || 'cargando'}}</b>
+        </div>
+        <form (submit)="guardarComprobante()"
+            class="w-full h-auto flex flex-column justify-content-start align-items-center" [formGroup]="formGroup">
+            <div class="w-full h-auto flex flex-wrap justify-content-start align-items-center">
+                <div class="w-full h-auto flex justify-content-center align-items-center">
+                    <b>Tipo de Comprobante: <p-dropdown formControlName="tipo_comprobante" optionLabel="descripcion"
+                            [showClear]="true" placeholder="Tipo Comprobante" [options]="tiposComprobantes">
+                        </p-dropdown></b>
+                </div>
+                <div class="w-6 h-auto flex flex-column">
+                    <b>Punto de Venta: <p-dropdown formControlName="pto_venta" optionLabel="nombrePtoVenta"
+                            [options]="ptos_venta" [showClear]="true" placeholder="Punto de Facturacion">
+                        </p-dropdown></b>
+
+                    <b>Moneda: <p-dropdown formControlName="moneda" optionLabel="name" [showClear]="true"
+                            placeholder="Moneda" [options]="monedas"> </p-dropdown></b>
+
+                    <b>Oficial: <p-inputSwitch formControlName="oficial" /></b>
+                </div>
+                <div class="w-6 h-auto flex flex-column">
+
+                    <b>Fecha Comprobante: <p-calendar formControlName="fecha" (showIcon)="true" dateFormat="dd/mm/yy" />
+                    </b>
+                    <b>Fecha Vencimiento: <p-calendar formControlName="fecha_vto" (showIcon)="true"
+                            dateFormat="dd/mm/yy" />
+                    </b>
+                    <b>Fecha Desde: <p-calendar formControlName="fecha_desde" (showIcon)="true" dateFormat="dd/mm/yy" />
+                    </b>
+                    <b>Fecha Hasta: <p-calendar formControlName="fecha_hasta" (showIcon)="true" dateFormat="dd/mm/yy" />
+                    </b>
+                </div>
+            </div>
+            <div class="w-full h-auto flex justify-content-around align-items-center">
+                <div class="w-10 h-auto flex flex-column justify-content-start align-items-start">
+                    <p>Importe Neto Total: {{ totalNeto | number: '1.2-2' }} </p>
+                    <p>Importe Neto No Gravado: {{ totalNetoNoGravado | number: '1.2-2' }} </p>
+                    <p>Importe Neto No Excento: 0.00</p>
+                    <p>Importe Neto Iva: {{ totalNetoIva | number: '1.2-2' }} </p>
+                    <p>Otros Tributos: 0.00</p>
+                    <p>Importe Total: {{ totalGeneral | number: '1.2-2' }}</p>
+                </div>
+                <div class="w-2">
+                    <p-button type="submit" [disabled]="formGroup.invalid || itemsFacturar.length == 0">Guardar Comprobante</p-button>
+                </div>
+            </div>
+        </form>
+
+        <div class="w-full h-auto flex-column flex justify-content-around align-items-center">
+            <div class="w-full h-auto p-4 flex flex-wrap justify-content-center align-items-center ">
+                <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label for="item">Item a Facturar</label>
+                    <p-dropdown inputId="item" [options]="articulos" [editable]="true" [showClear]="true"
+                        [checkmark]="true" [(ngModel)]="selectedArticulo" optionLabel="descripcion"
+                        placeholder="Seleccione un Articulo" />
+                </div>
+                <div *ngIf="selectedArticulo"
+                    class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label>Codigo: </label>
+                    <h2> {{selectedArticulo.codigo}}</h2>
+                </div>
+                <div *ngIf="!selectedArticulo"
+                    class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label for="descripcion">Descripcion: </label>
+                    <input inputId="descripcion" type="text" pInputText [(ngModel)]="descripcion" name="descripcion" />
+                </div>
+                <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <p-dropdown *ngIf="!selectedArticulo" inputId="tipoServicio" [options]="tiposServicios" [editable]="true" [showClear]="true"
+                        [checkmark]="true" [(ngModel)]="selectedTipoServicio" optionLabel="name"
+                        placeholder="Seleccione el tipo de servico" />
+                    <h2 *ngIf="selectedArticulo"> {{selectedArticulo.tipo}}</h2>
+                </div>
+
+
+                <div *ngIf="!selectedArticulo"
+                    class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label for="iva">Alicuota</label>
+                    <p-dropdown optionLabel="descripcion" [showClear]="true" placeholder="Alicuotas"
+                        [options]="alicuotasIva" [(ngModel)]="selectedAlicuotaIva"> </p-dropdown>
+                </div>
+
+                <div *ngIf="selectedArticulo"
+                    class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label for="iva">Monto Iva Unitario</label>
+                    <h2> {{selectedArticulo.monto_iva}}</h2>
+                </div>
+
+                <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label for="precio">Precio Unitario</label>
+                    <p-inputNumber *ngIf="!selectedArticulo" inputId="precio" [(ngModel)]="precioSinIva"
+                        name="precio" />
+                    <h2 *ngIf="selectedArticulo"> {{selectedArticulo.precioUnitario}}</h2>
+                </div>
+                <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label for="precioConIva">Precio con Iva</label>
+                    <p-inputNumber *ngIf="!selectedArticulo" inputId="precioConIva" [(ngModel)]="precioConIva"
+                        name="precioConIva" />
+                    <h2 *ngIf="selectedArticulo"> {{selectedArticulo.precioUnitarioConIva}}</h2>
+                </div>
+                <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label for="cantidad">cantidad</label>
+                    <p-inputNumber inputId="cantidad" [(ngModel)]="cantidad" name="cantidad" />
+                </div>
+
+                <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label for="boni">% Bonificacion</label>
+                    <p-inputNumber prefix="%" (onInput)="calcularBonificacion()" inputId="boni"
+                        [(ngModel)]="bonificacionPorcentaje" name="boni" />
+                </div>
+                <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                    <label>Total</label>
+                    <h2 *ngIf="!selectedArticulo">$ {{(precioConIva * cantidad) - bonificacion}}</h2>
+                    <h2 *ngIf="selectedArticulo">$ {{(selectedArticulo.precioUnitarioConIva * cantidad) - bonificacion}}
+                    </h2>
+                </div>
+            </div>
+
+            <p-button (onClick)="addItem()"> Agregar Item</p-button>
+            <p-table [columns]="itemColumns" [value]="itemsFacturar" class="w-full max-w-screen">
+                <ng-template pTemplate="header">
+                    <tr class="text-sm font-light">
+                        <th *ngFor="let col of itemColumns">{{ col | titlecase }}</th>
+                        <th>Acciones</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-item let-i="rowIndex">
+                    <tr>
+                        <td>{{item.articulo.descripcion}}</td>
+                        <td>{{item.articulo.codigo}}</td>
+                        <td>{{item.articulo.tipo}}</td>
+                        <td>{{item.cantidad}}</td>
+                        <td>{{item.articulo.precioUnitario}}</td>
+                        <td>{{item.articulo.precioUnitarioConIva}}</td>
+                        <td>{{item.bonificacion}}</td>
+                        <td>{{item.articulo.idAfipAlicuotaIva}}</td>
+                        <td>{{item.descripcionAlicuota}}</td>
+                        <td>{{item.articulo.iva}}</td>
+                        <td>{{item.articulo.monto_iva}}</td>
+                        <td>{{item.articulo.importeGravado}}</td>
+                        <td>{{item.articulo.importeNoGravado}}</td>
+                        <td>{{item.ImporteTotalSinIva}}</td>
+                        <td>{{item.ImporteNetoNoExcento}}</td>
+                        <td>{{item.ImporteNetoNoGravado}}</td>
+                        <td>{{item.ImporteTotalIva}}</td>
+                        <td>{{item.ImporteTotalConIva}}</td>
+
+                        <td>
+                            <button type="button" (click)="eliminarItem(i)"
+                                class="p-button p-button-danger p-button-sm">
+                                🗑️
+                            </button>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                    <tr>
+                        <td colspan="8" class="text-right font-bold">Total General:</td>
+                        <td class="font-bold">{{ totalGeneral | number: '1.2-2' }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </section>
+</p-dialog>

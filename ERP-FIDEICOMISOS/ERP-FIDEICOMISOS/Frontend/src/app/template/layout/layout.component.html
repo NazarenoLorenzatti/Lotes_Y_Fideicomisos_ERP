@@ -1,0 +1,23 @@
+<section class="w-full h-full min-h-screen flex flex-column justify-content-start align-items-start">
+    <nav class="w-full h-auto flex flex-row justify-content-between align-items-center bg-primary-300">
+        <div class="logo-container flex p-2">
+            <img class="w-full h-full" src="">
+        </div>
+        <div class="links-container w-auto h-full">
+            <ul class="w-auto h-full flex justify-content-center align-items-center">
+                <li class="mr-3"><a href="/home">Inicio</a></li>
+                <li class="mr-3"><a href="/contactos">Contactos</a></li>
+                <li class="mr-3"><a href="/cobranza">Cobranza</a></li>
+                <li class="mr-3"><a href="/facturacion">Facturacion</a></li>
+                <li class="mr-3"><a href="/proveedores">Proveedores</a></li>
+                <li class="mr-3"><a href="/contabilidad">Contabilidad</a></li>
+                <li class="mr-3">
+                    <p-splitButton label="Configuraciones" [model]="items" text severity="secondary" />
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <section class="flex-grow-1 w-full flex justify-content-center align-items-center">
+        <router-outlet></router-outlet>
+    </section>
+</section>
