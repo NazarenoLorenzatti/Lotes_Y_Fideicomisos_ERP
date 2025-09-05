@@ -1,13 +1,17 @@
 package com.ar.base.services.impl;
 
 import com.ar.base.entities.*;
+import com.ar.base.entities.AsientoContable.TipoOperacion;
 import com.ar.base.entities.CuentaPorCobrar.EstadoCuenta;
+import com.ar.base.repositories.iApliacionPagoDao;
 import com.ar.base.repositories.iCuentaPorCobrarDao;
 import com.ar.base.repositories.iMovimientoContableDao;
 import com.ar.base.services.iConciliacionService;
 import com.ar.base.services.iCuentaPorCobrarService;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +28,9 @@ public class CuentaPorCobrarServiceImpl implements iCuentaPorCobrarService {
 
     @Autowired
     private iMovimientoContableDao movimientosDao;
+    
+    @Autowired
+    private iApliacionPagoDao aplicacionPagoDao;
 
     private static final String CODIGO_CUENTA_CONTABLE = "1.100.000";
     private static final String CODIGO_CUENTA_CONTABLE_AUX = "91.100.000";
@@ -146,12 +153,11 @@ public class CuentaPorCobrarServiceImpl implements iCuentaPorCobrarService {
     public void anulacionSaldo(Long idAsientoOriginal) {
         AsientoContable asiento = new AsientoContable();
         asiento.setId(idAsientoOriginal);
-        List<CuentaPorCobrar> cuentas = cuentaPorCobrarDao.findByAsiento(asiento);
-        for (CuentaPorCobrar cxc : cuentas) {
-            cxc.setEstado(EstadoCuenta.ANULADA);
-            cxc.setSaldoPendiente(0.0);
-            cuentaPorCobrarDao.save(cxc);
-        }
+        Optional<CuentaPorCobrar> cxc = cuentaPorCobrarDao.findByAsiento(asiento);
+        cxc.get().setEstado(EstadoCuenta.ANULADA);
+        cxc.get().setSaldoPendiente(0.0);
+        cuentaPorCobrarDao.save(cxc.get());
+
     }
 
     private void conciliarMovimientos(CuentaPorCobrar cxc, CuentaContable cuenta) {
@@ -163,7 +169,36 @@ public class CuentaPorCobrarServiceImpl implements iCuentaPorCobrarService {
         aplicacion.setCuentaPorCobrar(cxc);
         aplicacion.setDescripcion(asientoContable.getDescripcion());
         aplicacion.setReferenciaExterna(asientoContable.getReferenciaExterna());
-        aplicacion.setFechaAplicacion(new Date());
+        aplicacion.setFechaAplicacion(LocalDateTime.now());
+    }
+
+    @Override
+    public void liberarCuentaPorAnulacion(List<AsientoContable> asientos) {
+        if (asientos.isEmpty()) {
+            return;
+        }
+        for (AsientoContable asiento : asientos) {
+            switch(asiento.getTipoOperacion()) {
+                case TipoOperacion.FACTURA_CLIENTE:
+                    Optional<CuentaPorCobrar> porCobrar = cuentaPorCobrarDao.findByAsiento(asiento);
+                    if(porCobrar.isEmpty()){
+                        break;
+                    }
+                    porCobrar.get().setEstado(EstadoCuenta.PENDIENTE);
+                    porCobrar.get().setSaldoPendiente(porCobrar.get().getImporteOriginal());
+                    cuentaPorCobrarDao.save(porCobrar.get());
+                 case TipoOperacion.RECIBO:
+                     Optional<AplicacionPago> pagoAplicado = aplicacionPagoDao.findByAsiento(asiento);
+                     if(pagoAplicado.isEmpty()){
+                         break;
+                     }
+                     pagoAplicado.get().setEstado(AplicacionPago.EstadoAplicacion.ANULADA);
+                     pagoAplicado.get().setFechaAnulacion(LocalDateTime.now());
+                     
+            }
+            
+            /*CUENTA CORRIENTE LIBERAR/
+        }
     }
 
 }

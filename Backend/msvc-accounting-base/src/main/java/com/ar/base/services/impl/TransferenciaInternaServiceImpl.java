@@ -128,7 +128,7 @@ public class TransferenciaInternaServiceImpl extends BuildResponsesServicesImpl 
             }
             List<AsientoContable> list = new ArrayList();
             for (AsientoContable asiento : transferencia.getAsientos()) {
-                asiento.setEstado(AsientoContable.Estado.ANULADO);
+                asiento.setEstado(AsientoContable.Estado.REVERTIDO);
                 AsientoContable asientoReversion = new AsientoContable();
                 this.buildAsientoReversion(asientoReversion, asiento);
                 asientosDao.save(asiento);

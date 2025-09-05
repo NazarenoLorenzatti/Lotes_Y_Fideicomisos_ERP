@@ -2,6 +2,7 @@ package com.ar.base.services.impl;
 
 import com.ar.base.entities.AsientoContable;
 import com.ar.base.services.iCuentaPorCobrarService;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -10,6 +11,10 @@ public class CheckCuentaPorCobrarServiceImpl {
 
     public CheckCuentaPorCobrarServiceImpl(iCuentaPorCobrarService cuentaPorCobrarService) {
         this.cuentaPorCobrarService = cuentaPorCobrarService;
+    }
+    
+    public void liberarCuentaPorAnulacion(List<AsientoContable> asiento){
+        cuentaPorCobrarService.liberarCuentaPorAnulacion(asiento);
     }
 
     public void aplicarMovimientoSobreCuenta(AsientoContable asiento) {

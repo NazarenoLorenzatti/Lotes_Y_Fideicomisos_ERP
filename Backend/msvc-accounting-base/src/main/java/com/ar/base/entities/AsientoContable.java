@@ -3,6 +3,7 @@ package com.ar.base.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
@@ -39,8 +40,11 @@ public class AsientoContable {
     
     private Long comprobanteId;
     
-    private String anulado_por;
+    private String revertido_por;
     private String originada_por;
+    
+    private LocalDateTime fechaReversion;
+    private LocalDateTime fechaCreacion;
     
     @ManyToOne
     @JoinColumn(name = "asiento_origen_id")
@@ -53,14 +57,14 @@ public class AsientoContable {
    @OneToMany(mappedBy = "asiento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovimientoContable> movimientos = new ArrayList<>();
     
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "conciliacion_id")
     private ConciliacionContable conciliacion;
     
     private boolean oficial;
 
     public enum Estado {
-        APROBADO, ANULADO, CONCILIADO;
+        APROBADO, REVERTIDO, CONCILIADO;
     }
 
     public enum TipoAsiento {

@@ -21,9 +21,12 @@ public class ConciliacionContable {
 
     @Enumerated(EnumType.STRING)
     private Estado estado;
-    
+
     private String originada_por;
     private String anulada_por;
+
+    private LocalDateTime fechaAnulacion;
+    private LocalDateTime fechaCreacion;
     
     @OneToMany(mappedBy = "conciliacion", cascade = CascadeType.ALL)
     @JsonManagedReference

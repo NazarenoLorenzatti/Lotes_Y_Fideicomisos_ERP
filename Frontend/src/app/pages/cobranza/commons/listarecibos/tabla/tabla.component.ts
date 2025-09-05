@@ -81,7 +81,7 @@ export class TablaComponent implements OnInit, OnChanges {
   }
 
   goToAsiento(id: number) {
-    this.router.navigate(["contabilidad/asientos/detalles/", { id }]);
+    this.router.navigate(["contabilidad/asientos/detalles", id]);
   }
 
   goToEditar(id: number) {

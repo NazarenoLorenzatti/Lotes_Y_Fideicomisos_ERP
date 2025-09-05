@@ -13,5 +13,5 @@ public interface iAsientoContableDao extends JpaRepository<AsientoContable, Long
     
     public Optional<AsientoContable> findByReferenciaExterna(String referenciaExterna);
     
-    public Optional<AsientoContable> findByConciliacion(ConciliacionContable conciliacion);
+    public List<AsientoContable> findAllByConciliacion(ConciliacionContable conciliacion);
 }

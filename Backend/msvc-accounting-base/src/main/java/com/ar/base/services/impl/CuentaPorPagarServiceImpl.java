@@ -165,7 +165,7 @@ public class CuentaPorPagarServiceImpl implements iCuentaPorPagarService {
         aplicacion.setCuentaPorPagar(cxp);
         aplicacion.setDescripcion(asientoContable.getDescripcion());
         aplicacion.setReferenciaExterna(asientoContable.getReferenciaExterna());
-        aplicacion.setFechaAplicacion(new Date());
+        aplicacion.setFechaAplicacion(LocalDateTime.now());
     }
 
 }

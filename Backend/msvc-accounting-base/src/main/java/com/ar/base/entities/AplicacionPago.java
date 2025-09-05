@@ -1,9 +1,9 @@
 package com.ar.base.entities;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Data;
-
 
 @Entity
 @Data
@@ -20,7 +20,11 @@ public class AplicacionPago {
     @ManyToOne
     private CuentaPorPagar cuentaPorPagar; // puede ser null si aplica a cliente
 
-    private Date fechaAplicacion;
+    @Enumerated(EnumType.STRING)
+    private EstadoAplicacion estado;
+
+    private LocalDateTime fechaAplicacion;
+    private LocalDateTime fechaAnulacion;
 
     private Double importe;
 
@@ -30,4 +34,8 @@ public class AplicacionPago {
     @ManyToOne
     @JoinColumn(name = "asiento_id")
     private AsientoContable asiento;
+
+    public enum EstadoAplicacion {
+         ANULADA, PARCIAL, APLICADA;
+    }
 }

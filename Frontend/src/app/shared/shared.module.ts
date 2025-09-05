@@ -18,6 +18,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { CalendarModule } from 'primeng/calendar';
 import { OrganizationChartModule } from 'primeng/organizationchart';
 import { ListaContactosComponent } from './lista-contactos/lista-contactos.component';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @NgModule({
   declarations: [
@@ -46,7 +47,8 @@ import { ListaContactosComponent } from './lista-contactos/lista-contactos.compo
     InputNumberModule,
     CalendarModule,
     OrganizationChartModule,
-    ListaContactosComponent
+    ListaContactosComponent,
+    ProgressSpinnerModule
   ],
   imports: [
     ButtonModule,
@@ -66,7 +68,8 @@ import { ListaContactosComponent } from './lista-contactos/lista-contactos.compo
     DialogModule,
     InputNumberModule,
     CalendarModule,
-    OrganizationChartModule
+    OrganizationChartModule,
+    ProgressSpinnerModule
   ]
 })
 export class SharedModule { }

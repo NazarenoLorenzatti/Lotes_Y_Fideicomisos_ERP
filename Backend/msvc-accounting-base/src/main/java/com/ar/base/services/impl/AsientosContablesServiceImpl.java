@@ -21,32 +21,32 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl implements iAsientoContableService {
-
+    
     @Autowired
     private iAsientoContableDao asientosDao;
-
+    
     @Autowired
     private iMovimientoContableDao movimientosDao;
-
+    
     @Autowired
     private iConciliacionContableDao conciliacionDao;
-
+    
     @Autowired
     private iCuentaContableDao cuentaContableDao;
-
+    
     @Autowired
     private CheckCuentaPorCobrarServiceImpl cuentasPorCobrar;
-
+    
     @Autowired
     private CheckCuentaPorPagarServiceImpl cuentasPorPagar;
-
+    
     @Autowired
     private iDetalleConciliacionDao detalleConciliacionDao;
-
+    
     private static final String CODIGO_OK = "00";
     private static final String CODIGO_NOK = "02";
     private static final String CODIGO_ERROR = "-01";
-
+    
     private static final Long ENTIDAD_CLIENTE = 1L;
     private static final Long ENTIDAD_PROVEEDOR = 2L;
 
@@ -68,11 +68,12 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             for (MovimientoContable mov : asientoContable.getMovimientos()) {
                 CuentaContable cuentaOrigen = cuentaContableDao.findById(mov.getCuenta().getId())
                         .orElseThrow(() -> new RuntimeException("Cuenta origen no encontrada"));
-
+                
                 mov.setCuenta(cuentaOrigen);
                 mov.setAsiento(asientoContable);
                 mov.setCuenta(mov.getCuenta());
             }
+            asientoContable.setFechaCreacion(LocalDateTime.now());
             asientoContable = this.asientosDao.save(asientoContable);
             ConciliacionContable conciliacion = this.intentarConciliacionAutomatica(asientoContable);
             asientoContable.setConciliacion(conciliacion);
@@ -83,7 +84,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             } else if (asientoContable.getTipoEntidad().getId().equals(ENTIDAD_PROVEEDOR)) {
                 this.checkCuentaPorPagar(asientoContable);
             }
-
+            
             return this.buildResponse("OK", CODIGO_OK, "Asiento contable Registrado", asientoContable, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error registrando asiento", e);
@@ -107,15 +108,14 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             if (optional.isEmpty()) {
                 return this.buildResponse("nOK", CODIGO_NOK, "Request Vacia", null, HttpStatus.BAD_REQUEST);
             }
-
-            if (optional.get().getEstado() == Estado.ANULADO) {
+            
+            if (optional.get().getEstado() == Estado.REVERTIDO) {
                 return this.buildResponse("nOK", CODIGO_NOK, "El asiento Ya se encuentra Revertido", null, HttpStatus.BAD_REQUEST);
             }
 
 //            if (optional.get().getConciliacion() != null) {
 //                this.anularConciliacion(optional.get().getConciliacion().getId());
 //            }
-
             this.buildReversion(optional.get(), asientoReversion);
             asientoReversion = this.asientosDao.save(asientoReversion);
             asientoReversion.setTipoAsiento(TipoAsiento.ASIENTO_REVERSION);
@@ -130,8 +130,8 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             } else if (asientoReversion.getTipoEntidad().getId().equals(ENTIDAD_PROVEEDOR)) {
                 this.checkCuentaPorPagar(asientoReversion);
             }
-            asientoReversion.getAsientoOrigen().setEstado(Estado.ANULADO);
-            asientoReversion.getAsientoOrigen().setAnulado_por(asientoReversion.getReferenciaExterna());
+            asientoReversion.getAsientoOrigen().setEstado(Estado.REVERTIDO);
+            asientoReversion.getAsientoOrigen().setRevertido_por(asientoReversion.getReferenciaExterna());
             asientosDao.save(asientoReversion.getAsientoOrigen());
             return this.buildResponse("OK", CODIGO_OK, "Asiento de Reversion Guardada", asientoReversion, HttpStatus.OK);
         } catch (Exception e) {
@@ -139,7 +139,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir el comprobante");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> getAsiento(Long id) {
         try {
@@ -153,7 +153,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir el Asiento contable");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> getAsiento(String referenciaExterna) {
         try {
@@ -167,7 +167,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir el Asiento contable");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> listarAsientos() {
         try {
@@ -181,7 +181,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir el Movimiento contable");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> getMovimiento(Long id) {
         try {
@@ -195,7 +195,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir el Movimiento contable");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> listarMovimientos() {
         try {
@@ -209,7 +209,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir los Movimientos contables");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> listarMovimientosPorAsiento(Long idAsiento) {
         try {
@@ -223,7 +223,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir los Movimientos contables");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> getConciliacion(Long id) {
         try {
@@ -237,7 +237,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir la Conciliacion contable");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> listarConciliaciones() {
         try {
@@ -251,42 +251,49 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir los Conciliaciones contables");
         }
     }
-
+    
     @Transactional
     @Override
     public ResponseEntity<?> anularConciliacion(Long conciliacionId) {
         try {
             Optional<ConciliacionContable> conciliacionOptional = conciliacionDao.findById(conciliacionId);
-
+            
             if (conciliacionOptional.isEmpty()) {
                 return this.buildResponse("nOK", CODIGO_NOK, "Request Vacia", null, HttpStatus.BAD_REQUEST);
             }
-
-            Optional<AsientoContable> asientoOptional = asientosDao.findByConciliacion(conciliacionOptional.get());
-            if (asientoOptional.isEmpty()) {
+            
+            List<AsientoContable> asientosConciliados = asientosDao.findAllByConciliacion(conciliacionOptional.get());
+            if (asientosConciliados.isEmpty()) {
                 return this.buildResponse("nOK", CODIGO_NOK, "No se encontro el Asiento", null, HttpStatus.BAD_REQUEST);
             }
             
-            if(conciliacionOptional.get().getEstado().equals(ConciliacionContable.Estado.ANULADA) 
-                    || asientoOptional.get().equals(Estado.ANULADO)) {
-                this.buildResponse("OK", CODIGO_OK, "El asiento ya se encuentra Anulado", asientoOptional.get(), HttpStatus.OK);
+            if (conciliacionOptional.get().getEstado().equals(ConciliacionContable.Estado.ANULADA)) {
+                return this.buildResponse("OK", CODIGO_OK, "El asiento ya se encuentra Anulado", asientosConciliados, HttpStatus.OK);
             }
             
             conciliacionOptional.get().setEstado(ConciliacionContable.Estado.ANULADA);
+            conciliacionOptional.get().setFechaAnulacion(LocalDateTime.now());
             for (DetalleConciliacion detalle : conciliacionOptional.get().getDetalles()) {
                 detalle.setEstado(DetalleConciliacion.Estado.ANULADA);
                 detalle.getMovimiento().setConciliado(false);
             }
-            asientoOptional.get().setEstado(Estado.ANULADO);
-            asientoOptional.get().setConciliacion( conciliacionOptional.get());
-            asientosDao.save(asientoOptional.get());
-            return this.buildResponse("OK", CODIGO_OK, "Conciliacion Anulada", asientoOptional.get(), HttpStatus.OK);
+            
+            for (AsientoContable asiento : asientosConciliados) {
+                if (asiento.getEstado().equals(Estado.REVERTIDO)) {
+                    return this.buildResponse("nOK", CODIGO_NOK, "El siguiente asiento se encuentra Revertido, "
+                            + asiento.getReferenciaExterna(), asiento, HttpStatus.BAD_REQUEST);
+                }
+                asiento.setEstado(Estado.APROBADO);
+                asiento.setConciliacion(conciliacionOptional.get());
+                asientosDao.save(asiento);
+            }
+            return this.buildResponse("OK", CODIGO_OK, "Conciliacion Anulada", asientosConciliados, HttpStatus.OK);
         } catch (Exception e) {
             log.error(e.getMessage());
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir los Conciliaciones contables");
         }
     }
-
+    
     @Override
     public ResponseEntity<?> buscarConciliacionPorMoviento(Long idMovimiento) {
         try {
@@ -300,7 +307,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir los Movimientos contables");
         }
     }
-
+    
     @Override
     @Transactional
     public ResponseEntity<?> conciliarMovimientos(List<Long> movimientosIds, String tipoOperacion, String descripcion) {
@@ -308,22 +315,22 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             if (movimientosIds.isEmpty()) {
                 return this.buildResponse("nOK", CODIGO_NOK, "Request Vacia", null, HttpStatus.BAD_REQUEST);
             }
-
+            
             List<MovimientoContable> movimientos = movimientosDao.findAllById(movimientosIds);
 
             // Validaciones
             Long cuentaId = movimientos.get(0).getCuenta().getId();
             boolean mismaCuenta = movimientos.stream()
                     .allMatch(m -> m.getCuenta().getId().equals(cuentaId));
-
+            
             if (!mismaCuenta) {
                 return this.buildResponse("nOK", CODIGO_NOK, "Los movimientos deben Pertenecer a la misma cuenta", null, HttpStatus.BAD_REQUEST);
             }
-
+            
             double saldo = movimientos.stream()
                     .mapToDouble(m -> m.getDebe() - m.getHaber())
                     .sum();
-
+            
             if (Math.abs(saldo) > 0.01) {
                 return this.buildResponse("nOK", CODIGO_NOK, "Los movimientos no se compensan entre si", null, HttpStatus.BAD_REQUEST);
             }
@@ -334,7 +341,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             conciliacion.setEstado(ConciliacionContable.Estado.ACTIVA);
             conciliacion.setTipoOperacion(tipoOperacion);
             conciliacion.setDescripcion(descripcion);
-
+            
             List<DetalleConciliacion> detalles = movimientos.stream().map(mov -> {
                 DetalleConciliacion d = new DetalleConciliacion();
                 d.setMovimiento(mov);
@@ -343,18 +350,18 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
                 mov.setConciliado(true);
                 return d;
             }).collect(Collectors.toList());
-
+            
             conciliacion.setDetalles(detalles);
             conciliacion.getDetalles().get(0).getMovimiento().getAsiento().setEstado(AsientoContable.Estado.CONCILIADO);
             conciliacionDao.save(conciliacion);
-
+            
             return this.buildResponse("OK", CODIGO_OK, "Movimientos Conciliados", conciliacion, HttpStatus.OK);
         } catch (Exception e) {
             log.error(e.getMessage());
             return this.buildErrorResponse("Error", CODIGO_ERROR, "Error en el Servidor al intentar conseguir el comprobante");
         }
     }
-
+    
     public void buildReversion(AsientoContable asientoOrigen, AsientoContable asientoReversion) {
         asientoReversion.setFecha(LocalDate.now());
         asientoReversion.setDescripcion("Reversión de " + asientoOrigen.getDescripcion());
@@ -375,16 +382,16 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             movNuevo.setEntidadId(asientoOrigen.getContactoId());
             movimientoReversion.add(movNuevo);
         }
-
+        
         asientoReversion.setMovimientos(movimientoReversion);
-
+        
     }
-
+    
     @Transactional
     private ConciliacionContable intentarConciliacionAutomatica(AsientoContable asiento) {
         List<DetalleConciliacion> detallesConciliacion = new ArrayList<>();
         for (MovimientoContable nuevoMov : asiento.getMovimientos()) {
-            if (!nuevoMov.getCuenta().isConciliable() || nuevoMov.getAsiento().getEstado() == Estado.ANULADO) {
+            if (!nuevoMov.getCuenta().isConciliable() || nuevoMov.getAsiento().getEstado() == Estado.REVERTIDO) {
                 continue;
             }
             boolean nuevoEsDebe = nuevoMov.getDebe() > 0;
@@ -392,44 +399,45 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             List<MovimientoContable> candidatos = movimientosDao
                     .findByCuentaAndEntidadIdAndConciliado(nuevoMov.getCuenta(), nuevoMov.getEntidadId(), false)
                     .stream()
-                    .filter(m -> m.getAsiento().getEstado() != Estado.ANULADO)
+                    .filter(m -> m.getAsiento().getEstado() != Estado.REVERTIDO)
                     .collect(Collectors.toList());
-
+            
             for (MovimientoContable candidato : candidatos) {
                 boolean candidatoEsDebe = candidato.getDebe() > 0;
                 // ❗ Solo conciliá si son opuestos
                 if (nuevoEsDebe == candidatoEsDebe) {
                     continue;
                 }
-
+                
                 Double importeCandidato = candidato.getDebe() > 0 ? candidato.getDebe() : candidato.getHaber();
-
+                
                 if (Objects.equals(importeCandidato, importe)) {
                     ConciliacionContable conciliacion = new ConciliacionContable();
                     conciliacion.setFecha(LocalDateTime.now());
                     conciliacion.setTipoOperacion("AUTO");
                     conciliacion.setDescripcion("Conciliación automática");
                     conciliacion.setEstado(ConciliacionContable.Estado.REALIZADA);
-
+                    
                     DetalleConciliacion d1 = new DetalleConciliacion();
                     d1.setConciliacion(conciliacion);
                     d1.setImporte(importe);
                     d1.setMovimiento(candidato); // movimiento ya existente, sin conciliar
                     d1.setEstado(DetalleConciliacion.Estado.ACTIVA);
-
+                    
                     DetalleConciliacion d2 = new DetalleConciliacion();
                     d2.setConciliacion(conciliacion);
                     d2.setImporte(importe);
                     d2.setMovimiento(nuevoMov); // ❗ este es el nuevo movimiento que estás registrando ahora
                     d2.setEstado(DetalleConciliacion.Estado.ACTIVA);
-
+                    
                     candidato.setConciliado(true);
                     nuevoMov.setConciliado(true); // marcás ambos como conciliado
                     detallesConciliacion.add(d1);
                     detallesConciliacion.add(d2);
-
+                    
                     for (DetalleConciliacion d : detallesConciliacion) {
                         d.getMovimiento().getAsiento().setEstado(AsientoContable.Estado.CONCILIADO);
+                        d.getMovimiento().getAsiento().setConciliacion(conciliacion);
                     }
                     conciliacion.setDetalles(detallesConciliacion);
                     conciliacion.setOriginada_por(asiento.getReferenciaExterna());
@@ -440,34 +448,34 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
         }
         return null;
     }
-
+    
     @Transactional
     public ConciliacionContable conciliarAsientoReversado(AsientoContable asientoReversion) {
         AsientoContable asientoOriginal = asientoReversion.getAsientoOrigen();
-        if (asientoOriginal == null || asientoOriginal.getEstado() == Estado.ANULADO || asientoReversion.getEstado() == Estado.ANULADO) {
+        if (asientoOriginal == null || asientoOriginal.getEstado() == Estado.REVERTIDO || asientoReversion.getEstado() == Estado.REVERTIDO) {
             log.warn("No se puede conciliar: asiento origen nulo o alguno está anulado.");
             return null;
         }
-
+        
         List<MovimientoContable> movimientosOriginal = asientoOriginal.getMovimientos();
         List<MovimientoContable> movimientosReversion = asientoReversion.getMovimientos();
-
+        
         if (movimientosOriginal.size() != movimientosReversion.size()) {
             log.warn("No se puede conciliar: distinto número de movimientos entre original y reversión.");
             return null;
         }
-
+        
         List<DetalleConciliacion> detallesConciliacion = new ArrayList<>();
-
+        
         for (int i = 0; i < movimientosOriginal.size(); i++) {
             MovimientoContable original = movimientosOriginal.get(i);
             MovimientoContable reverso = movimientosReversion.get(i);
-
+            
             boolean cuentasIguales = Objects.equals(original.getCuenta().getId(), reverso.getCuenta().getId());
             boolean montosInvertidos
                     = Objects.equals(original.getDebe(), reverso.getHaber())
                     && Objects.equals(original.getHaber(), reverso.getDebe());
-
+            
             if (!cuentasIguales || !montosInvertidos) {
                 log.warn("No se puede conciliar: movimientos no coinciden (cuenta o importe invertido)");
                 return null;
@@ -476,7 +484,7 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             // Buscar los movimientos contables asociados
             Optional<MovimientoContable> movOriginal = movimientosDao.findByAsientoAndCuenta(asientoOriginal, original.getCuenta());
             Optional<MovimientoContable> movReverso = movimientosDao.findByAsientoAndCuenta(asientoReversion, reverso.getCuenta());
-
+            
             if (movOriginal.isEmpty() || movReverso.isEmpty()) {
                 log.warn("No se puede conciliar: no se encontraron movimientos contables asociados.");
                 return null;
@@ -484,18 +492,18 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
 
             // Crear los detalles de conciliación
             Double importe = original.getDebe() > 0 ? original.getDebe() : original.getHaber();
-
+            
             DetalleConciliacion d1 = new DetalleConciliacion();
             d1.setMovimiento(movOriginal.get());
             d1.setImporte(importe);
-
+            
             DetalleConciliacion d2 = new DetalleConciliacion();
             d2.setMovimiento(movReverso.get());
             d2.setImporte(importe);
-
+            
             movOriginal.get().setConciliado(true);
             movReverso.get().setConciliado(true);
-
+            
             detallesConciliacion.add(d1);
             detallesConciliacion.add(d2);
         }
@@ -506,13 +514,13 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
         conciliacion.setDescripcion("Conciliación por reversión de asiento " + asientoOriginal.getId());
         conciliacion.setTipoOperacion("REVERSION");
         conciliacion.setEstado(ConciliacionContable.Estado.REALIZADA);
-
+        
         for (DetalleConciliacion d : detallesConciliacion) {
             d.setConciliacion(conciliacion);
         }
-
+        
         this.anularConciliacionOrigen(asientoOriginal, asientoReversion);
-
+        
         conciliacion.setDetalles(detallesConciliacion);
         conciliacion = conciliacionDao.save(conciliacion);
         asientoOriginal.getReversiones().add(asientoReversion);
@@ -520,13 +528,13 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
         asientoOriginal.setConciliacion(conciliacion);
         return conciliacionDao.save(conciliacion);
     }
-
+    
     private void anularConciliacionOrigen(AsientoContable asientoOriginal, AsientoContable asientoReversion) {
-
+        
         if (asientoOriginal.getConciliacion() == null) {
             return;
         }
-
+        
         AsientoContable asientoAnteriorConciliado = null;
         ConciliacionContable conciliacion = asientoOriginal.getConciliacion();
         conciliacion.setEstado(ConciliacionContable.Estado.ANULADA);
@@ -539,26 +547,26 @@ public class AsientosContablesServiceImpl extends BuildResponsesServicesImpl imp
             }
             movimientosDao.save(mov);
         }
-
+        
         if (asientoAnteriorConciliado != null) {
             conciliacionDao.delete(asientoAnteriorConciliado.getConciliacion());
-            asientoAnteriorConciliado.setEstado(asientoAnteriorConciliado.getEstado() != Estado.ANULADO ? Estado.APROBADO : Estado.ANULADO);
+            asientoAnteriorConciliado.setEstado(asientoAnteriorConciliado.getEstado() != Estado.REVERTIDO ? Estado.APROBADO : Estado.REVERTIDO);
             asientoAnteriorConciliado.getMovimientos().forEach(m -> m.setConciliado(false));
         }
-
+        
         conciliacion.setAnulada_por(asientoReversion.getReferenciaExterna());
         conciliacionDao.save(conciliacion);
-        asientoOriginal.setEstado(Estado.ANULADO);
+        asientoOriginal.setEstado(Estado.REVERTIDO);
         // Si tenés mappedBy
         this.asientosDao.save(asientoOriginal); // Solo si querés actualizar el estado
     }
-
+    
     private void checkCuentaPorCobrar(AsientoContable asiento) {
         cuentasPorCobrar.aplicarMovimientoSobreCuenta(asiento);
     }
-
+    
     private void checkCuentaPorPagar(AsientoContable asiento) {
         cuentasPorPagar.aplicarMovimientoSobreCuenta(asiento);
     }
-
+    
 }
