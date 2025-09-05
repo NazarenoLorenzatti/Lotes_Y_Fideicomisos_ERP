@@ -1,0 +1,156 @@
+<div class="btn-container w-full h-auto p-6 flex justify-content-between align-items-center bg-red-400">
+    <div class="w-auto h-auto btn bg-black-alpha-10 flex justify-content-center align-items-center">
+        <div class="w-5rem h-5rem cursor-pointer" (click)="goTo('/cobranza')">
+            VOLVER
+        </div>
+    </div>
+</div>
+<app-tabla-contactos (contactoSeleccionado)="onSeleccionarCliente($event)"></app-tabla-contactos>
+
+<p-dialog *ngIf="contacto" class="flex flex-column justify-content-around align-items-center" header="Edit Profile"
+    [modal]="true" [(visible)]="visible" [style]="{ width: 'auto' }">
+
+    <div class="w-full h-full flex flex-column justify-content-center align-items-center">
+        <h1>CLIENTE: {{contacto?.razonSocial}}</h1>
+        <h1>Condicion Frente al IVA: {{contacto?.condicionIva}} </h1>
+        <h1>Numero Identificacion: {{contacto?.numeroDocumento}}</h1>
+        <h1>ID: {{contacto?.id}}</h1>
+    </div>
+    <div *ngIf="cuit" class="w-full f-auto flex flex-column">
+        <div class="img-container h-10rem w-10rem bg-black-alpha-40">
+            <img src="" />
+        </div>
+        <b>Razon Social: {{cuit.razonSocial || 'cargando'}}</b>
+        <b>Domicilio:{{cuit.direccionFiscal || 'cargando'}}</b>
+        <b>Localidad: <!--{{cuit.localidad}}--></b>
+        <b>Cuit: {{cuit.cuit || 'cargando'}} </b>
+    </div>
+
+    <div class="flex flex-row h-auto w-full justify-content-around align-items-center">
+        <div class="w-auto h-auto p-4">
+            Estado del Cliente:
+            {{contacto?.estado?.nombreEstado}}
+        </div>
+    </div>
+
+    <form (submit)="guardarRecibo()" class="w-full h-auto flex flex-column justify-content-start align-items-center"
+        [formGroup]="formGroup">
+        <div class="w-full h-auto flex flex-wrap justify-content-start align-items-center">
+
+            <div class="w-6 h-auto flex flex-column">
+                             <b>Punto de Venta: <p-dropdown formControlName="pto_venta" optionLabel="nombrePtoVenta"
+                            [options]="ptos_venta" [showClear]="true" placeholder="Punto de Facturacion">
+                        </p-dropdown></b>
+
+                <b>Moneda: <p-dropdown formControlName="moneda" optionLabel="name" [showClear]="true"
+                        placeholder="Moneda" [options]="monedas"> </p-dropdown></b>
+            </div>
+            <div class="w-6 h-auto flex flex-column">
+                <b>Fecha Recibo: <p-calendar formControlName="fecha" (showIcon)="true" dateFormat="dd/mm/yy" />
+                </b>
+            </div>
+        </div>
+        <div class="w-full h-auto flex justify-content-around align-items-center">
+            <div class="w-10 h-auto flex flex-column justify-content-start align-items-start">
+                <p>Importe Neto: {{ totalGeneral - totalRetenciones | number: '1.2-2' }}</p>
+                <p>Importe Retenciones: {{ totalRetenciones | number: '1.2-2' }}</p>
+                <p>Importe Total: {{ totalGeneral | number: '1.2-2' }}</p>
+                <p>Nuevo Saldo: {{ nuevoSaldo | number: '1.2-2' }}</p>
+            </div>
+            <div class="w-2">
+                <p-button type="submit" [disabled]="formGroup.invalid || imputaciones.length == 0">Guardar
+                    Recibo</p-button>
+            </div>
+        </div>
+    </form>
+
+    <b>Oficial: <p-inputSwitch [(ngModel)]="oficial" (onChange)="setCajasDisponibles()" /></b>
+
+    <div class="w-auto h-auto flex flex-row justify-content-start align-items-center">
+        <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+            <label for="tipo">Tipo de Pago</label>
+            <p-dropdown autocomplete="off" inputId="tipo" [options]="tipos" [editable]="true" [showClear]="true"
+                [checkmark]="true" [(ngModel)]="seletedTipo" optionLabel="name"
+                placeholder="Seleccione el tipo de cobro" (onChange)="setCajasDisponibles()" />
+        </div>
+        <div *ngIf="seletedTipo" class="flex flex-row w-auto justify-content-around align-items-center">
+            <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                <label for="caja">Caja de Cobranza</label>
+                <p-dropdown autocomplete="off" inputId="caja" [options]="cajas" [editable]="true" [showClear]="true"
+                    [checkmark]="true" [(ngModel)]="selectedCajas" optionLabel="nombre_caja"
+                    placeholder="Seleccione el tipo de servico" />
+            </div>
+            <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                <label for="fechaReal">Fecha de Pago</label>
+                <p-calendar autocomplete="off" [(ngModel)]="fechaRealPago" (showIcon)="true" dateFormat="dd/mm/yy" />
+            </div>
+            <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                <label for="importe">Importe</label>
+                <p-inputNumber autocomplete="off" inputId="importe" [(ngModel)]="importeImputado" name="precio" />
+            </div>
+            <div *ngIf="seletedTipo?.name != 'EFECTIVO'"
+                class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                <label for="bco">Comprobante: </label>
+                <input autocomplete="off" inputId="bco" type="text" pInputText [(ngModel)]="bancoOrigen" name="bco" />
+            </div>
+            <div *ngIf="seletedTipo?.name != 'EFECTIVO'"
+                class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                <label for="nro">Bco Origen: </label>
+                <input autocomplete="off" inputId="nro" type="text" pInputText [(ngModel)]="nroComprobante"
+                    name="nro" />
+            </div>
+            <div class="w-auto h-auto flex flex-column justify-content-center align-items-start">
+                <label for="nota">Nota: </label>
+                <input inputId="nota" type="text" pInputText [(ngModel)]="nota" name="nota" />
+            </div>
+        </div>
+    </div>
+    <p-button (onClick)="addItem()"> Agregar Item</p-button>
+    <p-table [value]="imputaciones" class="w-full max-w-screen">
+        <ng-template pTemplate="header">
+            <tr class="text-sm font-light">
+                <th> {{ 'Destino' | titlecase }}</th>
+                <th> {{ 'Fecha Real' | titlecase }}</th>
+                <th> {{ 'Tipo' | titlecase }}</th>
+                <th> {{ 'Comprobante' | titlecase }}</th>
+                <th> {{ 'Origen' | titlecase }}</th>
+                <th> {{ 'Nota' | titlecase }}</th>
+                <th> {{ 'IMPORTE' | titlecase }}</th>
+                <th>Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-imp let-i="rowIndex">
+            <tr>
+                <td>{{imp.cajaCobranza.nombre_caja}}</td>
+                <td>{{imp.fechaRealPago}}</td>                
+                <td>{{imp.tipo}}</td>
+                <td>{{imp.nroComprobante}}</td>
+                <td>{{imp.bancoOrigen}}</td>
+                <td>{{imp.nota}}</td>
+                <td>{{imp.importeImputado}}</td>
+                <td>
+                    <button type="button" (click)="eliminarItem(i)" class="p-button p-button-danger p-button-sm">
+                        🗑️
+                    </button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="footer">
+            <tr>
+                <td colspan="8" class="text-right font-bold">Total a Cobrar:</td>
+                <td class="font-bold">$ {{ totalGeneral | number: '1.2-2' }}</td>
+            </tr>
+            <tr>
+                <td colspan="8" class="text-right font-bold">Nuevo Saldo:</td>
+                <td class="font-bold">$ {{ nuevoSaldo | number: '1.2-2' }}</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <div *ngIf="contacto" class="w-full h-auto">
+        <app-cuenta-corriente *ngIf="contacto?.cuentaCorriente"
+            [cuentaCorriente]="contacto?.cuentaCorriente"></app-cuenta-corriente>
+        <div *ngIf="!contacto?.cuentaCorriente">CARGANDO CUENTA CORRIENTE</div>
+    </div>
+
+</p-dialog>

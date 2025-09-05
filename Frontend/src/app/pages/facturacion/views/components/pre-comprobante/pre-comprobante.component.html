@@ -1,0 +1,50 @@
+<section *ngIf="!loading" class="w-full h-full flex flex-column justify-content-start align-items-center">
+    <div class="w-full h-auto p-8 flex justify-content-between align-items-start">
+        <div class="w-5rem h-5rem cursor-pointer" (click)="goTo('facturacion/views/pendientess')">
+            VOLVER
+        </div>
+        <div class="w-5rem h-5rem cursor-pointer" *ngIf="preComprobante.estado.descripcion == 'Borrador'"
+            (click)="editar()">
+            EDITAR
+        </div>
+        <div class="w-5rem h-5rem cursor-pointer" *ngIf="preComprobante.estado.descripcion == 'Borrador'"
+            (click)="eliminar(preComprobante.id)">
+            ELIMINAR
+        </div>
+        <div *ngIf="preComprobante.estado.descripcion == 'Borrador'">
+            <div *ngIf="!preComprobante.descripcionTipoComprobante?.includes('Crédito')"
+                class="w-5rem h-5rem cursor-pointer" (click)="confirmar(id)">
+                CONFIRMAR
+            </div>
+            <div *ngIf="preComprobante.descripcionTipoComprobante?.includes('Crédito')"
+                class="w-5rem h-5rem cursor-pointer" (click)="confirmContraComprobante(preComprobante)">
+                Confirmar ContraComprobante
+            </div>
+        </div>
+    </div>
+    <div class="w-full h-5rem text-center" [ngClass]="{'bg-black-alpha-20' : preComprobante.estado.descripcion == 'Borrador',
+      'bg-green-200' : preComprobante.estado.descripcion == 'Validado',
+      'bg-blue-200' : preComprobante.estado.descripcion == 'Confirmado',
+      'bg-red-200' : preComprobante.estado.descripcion == 'Cancelado'  
+    }">
+        {{preComprobante.estado.descripcion}}
+    </div>
+    <div class="w-full h-auto">
+        <app-pre-comprobante-common [preComprobante]="preComprobante"></app-pre-comprobante-common>
+    </div>
+</section>
+
+<p-dialog class="w-auto h-auto" header="Crear Factura" [modal]="true" [(visible)]="visible">
+    <section *ngIf="preComprobante && contacto"
+        class="w-auto h-auto flex flex-row-reverse justify-content-center align-items-center">
+        <app-crear-factura [contacto]="contacto"></app-crear-factura>
+    </section>
+    <section *ngIf="!contacto" class="w-auto h-auto flex flex-row-reverse justify-content-center align-items-center">
+        CARGANDO
+    </section>
+</p-dialog>
+
+<section *ngIf="loading" class="w-full h-full flex flex-column justify-content-center align-items-center">
+    CARGANDO
+</section>
+<p-toast></p-toast>

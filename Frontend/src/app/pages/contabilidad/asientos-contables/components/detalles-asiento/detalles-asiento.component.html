@@ -1,0 +1,59 @@
+<section class="w-full h-auto p-5 flex justify-content-between align-items-center">
+    <div class="w-5rem h-5rem cursor-pointer" (click)="goTo('/contabilidad/asientos')">
+        VOLVER
+    </div>
+    <div class="w-5rem h-5rem cursor-pointer" (click)="revertirAsiento(asiento.id)">
+        Asiento Reversion
+    </div>
+</section>
+<section *ngIf="!loading" class="w-full h-auto flex flex-column justify-content-center align-items-center">
+    <h2 class="w-full text-center">ORIGEN: {{asiento.descripcion}}</h2>
+    <div class="w-full h-auto p-6 flex flex-column justify-content-around align-items-center">
+        <div class="w-full h-auto flex justify-content-around align-items-center">
+            <div class="w-5 h-auto bg-blue-100">
+                <h2>{{asiento.estado}}</h2>
+                <h2>{{asiento.tipoAsiento}}</h2>
+            </div>
+            <div class="w-5 h-auto bg-blue-100">
+                <h3>{{asiento.fecha | date: 'dd/MM/yyyy'}}</h3>
+                <h3>{{asiento.referenciaExterna}}</h3>
+            </div>
+        </div>
+
+        <div class="w-full h-auto">
+            <p-table [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5, 10, 20]" [value]="asiento.movimientos"
+                class="w-full h-auto" dataKey="id">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Id Mov</th>
+                        <th>Cuenta</th>
+                        <th>Nro</th>
+                        <th>Tipo</th>
+                        <th>Tipo Entidad</th>
+                        <th>Debe</th>
+                        <th>Haber</th>
+                        <th>Conciliado</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-mov>
+                    <tr>
+                        <td>{{ mov?.id }}</td>
+                        <td>{{ mov?.cuenta?.nombre}}</td>
+                        <td>{{ mov?.cuenta?.codigo}}</td>
+                        <td>{{ mov?.cuenta?.tipo}}</td>
+                        <td>{{ mov?.tipoEntidad?.nombre}}</td>
+                        <td>{{ mov?.debe }}</td>
+                        <td>{{ mov?.haber }}</td>
+                        <td>{{ mov?.conciliado }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</section>
+<section *ngIf="conciliacion" class="w-full h-auto flex justify-content-center align-items-center" style="background-color: brown;">
+    <app-conciliacion class="w-10 h-auto flex justify-content-center align-items-center" [conciliacion]="conciliacion"></app-conciliacion>
+</section>
+<section *ngIf="loading">
+    CARGANDO
+</section>

@@ -1,0 +1,21 @@
+th{
+    width: auto;
+    max-width: 10vh;
+}
+
+tr{
+    cursor: pointer;
+}
+
+tr:hover{
+    background-color: rgba(0, 0, 0, 0.098);
+}
+
+b{
+    cursor: pointer;
+    z-index: 100;
+}
+
+.nc{
+   background-color: rgba(149, 25, 25, 0.098);  
+}

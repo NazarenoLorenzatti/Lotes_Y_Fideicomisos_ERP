@@ -1,0 +1,37 @@
+<section class="w-full h-auto p-5 flex justify-content-between align-items-center">
+    <div class="w-5rem h-5rem cursor-pointer" (click)="goTo('/contabilidad')">
+        VOLVER
+    </div>
+    <div class="w-5rem h-5rem cursor-pointer" (click)="goTo('/contabilidad/asientos/crear')">
+        CREAR
+    </div>
+</section>
+<section *ngIf="!loading" class="card flex flex-column justify-content-center align-items-center">
+
+    <p-organizationChart [value]="treesOficiales" selectionMode="multiple" [(selection)]="selectedNodes" [collapsible]="true">
+        <ng-template let-node pTemplate="cuenta" >
+            <div class="text-center p-3 node" [ngClass]="{'archivada': !node.data.activa}">
+                <div>{{node.label}}</div>
+                <div class="font-bold">{{node.data.codigo}}</div>
+                <h3 *ngIf="node.data.activa">Activa</h3>
+                <h3 *ngIf="!node.data.activa">Archivada</h3>
+            </div>
+        </ng-template>
+    </p-organizationChart>
+
+    
+    <p-organizationChart [value]="treesAuxiliares" selectionMode="multiple" [(selection)]="selectedNodes" [collapsible]="true">
+        <ng-template let-node pTemplate="cuenta" >
+            <div class="text-center p-3 node" [ngClass]="{'archivada': !node.data.activa}">
+                <div>{{node.label}}</div>
+                <div class="font-bold">{{node.data.codigo}}</div>
+                <h3 *ngIf="node.data.activa">Activa</h3>
+                <h3 *ngIf="!node.data.activa">Archivada</h3>
+            </div>
+        </ng-template>
+    </p-organizationChart>
+
+</section>
+<section *ngIf="loading" class="w-full h-auto p-5 flex justify-content-between align-items-center">
+    CARGANDO
+</section>
