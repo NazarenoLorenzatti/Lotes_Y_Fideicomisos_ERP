@@ -13,8 +13,8 @@ public class CheckCuentaPorCobrarServiceImpl {
         this.cuentaPorCobrarService = cuentaPorCobrarService;
     }
     
-    public void liberarCuentaPorAnulacion(List<AsientoContable> asiento){
-        cuentaPorCobrarService.liberarCuentaPorAnulacion(asiento);
+    public void liberarCuentaPorAnulacion(List<AsientoContable> asientos){
+        cuentaPorCobrarService.liberarCuentaPorAnulacion(asientos);
     }
 
     public void aplicarMovimientoSobreCuenta(AsientoContable asiento) {

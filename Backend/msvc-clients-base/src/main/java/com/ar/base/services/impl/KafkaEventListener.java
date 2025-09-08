@@ -51,7 +51,7 @@ public class KafkaEventListener implements iKafkaEventListenerService {
             movimiento.setImporte_gravado(comprobanteRecibido.getImporte_gravado());
             movimiento.setSaldoPendiente(comprobanteRecibido.getImporteTotal());
             movimiento.setComprobanteId(comprobanteRecibido.getIdComprobante());
-            movimiento.setNroComprobante(comprobanteRecibido.getNroComprobante());
+            movimiento.setNroComprobante("UUID-"+comprobanteRecibido.getNroComprobante());
             movimiento.setDescripcion(comprobanteRecibido.getTipoComprobante() + " " + comprobanteRecibido.getEstado());
             movimiento.setOficial(comprobanteRecibido.isOficial());
             switch (comprobanteRecibido.getTipoComprobante()) {
@@ -78,7 +78,7 @@ public class KafkaEventListener implements iKafkaEventListenerService {
             movimiento.setImporte_gravado(facturaRecibida.getImporteGravado());
             movimiento.setSaldoPendiente(facturaRecibida.getImporteTotal());
             movimiento.setComprobanteId(facturaRecibida.getId());
-            movimiento.setNroComprobante(facturaRecibida.getNumeroFactura());
+            movimiento.setNroComprobante("UUID-"+facturaRecibida.getNumeroFactura());
             movimiento.setDescripcion(facturaRecibida.getTipoFactura() + " " + facturaRecibida.getEstado());
             movimiento.setOficial(facturaRecibida.getOficial());
             movimiento.setTipoMovimiento(MovimientoCuentaCorriente.TipoMovimiento.CREDITO);
@@ -95,7 +95,7 @@ public class KafkaEventListener implements iKafkaEventListenerService {
             movimiento.setImporte(minutaRecibida.getImporte());
             movimiento.setSaldoPendiente(0.0);
             movimiento.setComprobanteId(minutaRecibida.getId());
-            movimiento.setNroComprobante(minutaRecibida.getNumero());
+            movimiento.setNroComprobante("UUID-"+minutaRecibida.getNumero());
             movimiento.setDescripcion("Minuta de Pago " + minutaRecibida.getCajaNombre());
             movimiento.setOficial(minutaRecibida.getOficial());
             movimiento.setTipoMovimiento(MovimientoCuentaCorriente.TipoMovimiento.DEBITO);

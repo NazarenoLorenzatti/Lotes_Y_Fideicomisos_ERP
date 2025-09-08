@@ -3,6 +3,7 @@ package com.ar.base.entities;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +25,7 @@ public class MovimientoCuentaCorriente {
 
     @Column(nullable = false)
 //    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy'T'HH:mm:ss")
-    private Date fecha;
+    private LocalDateTime fecha;
 
     @Column(nullable = false)
     private Double importe;

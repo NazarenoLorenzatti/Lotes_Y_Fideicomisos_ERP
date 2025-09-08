@@ -17,6 +17,6 @@ public interface iCuentaCorrienteService {
     
     public ResponseEntity<?> getAplicaciones(Long idMovimientoOrigen, Long idMovimientoDestino);
 
-    public ResponseEntity<?> deleteAplicacion(Long idAplicacion);
+    public ResponseEntity<?> anularAplicacion(String nroComprobante);
     
 }

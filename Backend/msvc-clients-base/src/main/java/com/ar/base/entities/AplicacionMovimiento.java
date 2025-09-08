@@ -2,6 +2,7 @@ package com.ar.base.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Data;
 
@@ -24,7 +25,14 @@ public class AplicacionMovimiento {
     @JsonIgnore
     private MovimientoCuentaCorriente movimientoDestino;
 
-    private Date fecha_aplicacion;
+    private LocalDateTime fecha_aplicacion;
+    
+    @Enumerated(EnumType.STRING)
+    private EstadoAplicacion estadoAplicacion;
 
     private Double importeAplicado;
+    
+    public enum EstadoAplicacion {
+        ANULADA, VIGENTE, PENDIENTE;
+    }
 }

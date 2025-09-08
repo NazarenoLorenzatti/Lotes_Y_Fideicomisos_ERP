@@ -4,12 +4,14 @@ import com.ar.base.DTOs.AplicacionManualRequest;
 import com.ar.base.DTOs.AplicacionResponseDto;
 import com.ar.base.DTOs.ImporteAplicadoEvent;
 import com.ar.base.entities.*;
+import com.ar.base.entities.AplicacionMovimiento.EstadoAplicacion;
 import com.ar.base.entities.MovimientoCuentaCorriente.TipoMovimiento;
 import com.ar.base.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.ar.base.responses.BuildResponsesServicesImpl;
 import com.ar.base.services.iCuentaCorrienteService;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -49,7 +51,6 @@ public class CuentaCorrienteServiceImpl extends BuildResponsesServicesImpl imple
                 return this.buildResponse("Error", "02", "No Se encontro la cuenta Corriente del contacto", null, HttpStatus.BAD_REQUEST);
             }
             CuentaCorriente cc = ccOptional.get();
-//            cc.setSaldo(cc.calcularSaldo());
             return this.buildResponse("OK", "00", "Cuenta Corriente Encontrada", cc, HttpStatus.OK);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -96,22 +97,41 @@ public class CuentaCorrienteServiceImpl extends BuildResponsesServicesImpl imple
     }
 
     @Override
-    public ResponseEntity<?> deleteAplicacion(Long idAplicacion) {
+    public ResponseEntity<?> anularAplicacion(String nroComprobante) {
         try {
-            Optional<AplicacionMovimiento> o = aplicacionRepository.findById(idAplicacion);
-            if (o.isEmpty()) {
-                return this.buildResponse("Error", "02", "No Se el movimiento a eliminar", null, HttpStatus.BAD_REQUEST);
+            Optional<MovimientoCuentaCorriente> movimientoOptional = movimientoCuentaCorrienteRepository.findByNroComprobante(nroComprobante);
+//            Optional<AplicacionMovimiento> movimientoOptional = aplicacionRepository.findById(idAplicacion);
+            if (movimientoOptional.isEmpty()) {
+                return this.buildResponse("Error", "02", "No Se encontro el movimiento a anular", null, HttpStatus.BAD_REQUEST);
             }
-            aplicacionRepository.delete(o.get());
-            return this.buildResponse("OK", "00", "Aplicacion Eliminada", o.get(), HttpStatus.OK);
+
+            boolean todasAnuladas = movimientoOptional.get().getAplicacionesComoDestino().isEmpty()
+                    ? movimientoOptional.get().getAplicacionesComoOrigen().stream().allMatch(a -> a.getEstadoAplicacion().equals(EstadoAplicacion.ANULADA))
+                    : movimientoOptional.get().getAplicacionesComoDestino().stream().allMatch(a -> a.getEstadoAplicacion().equals(EstadoAplicacion.ANULADA));
+            if (todasAnuladas) {
+                return this.buildResponse("Error", "02", "No Se encontro ninguna aplicacion activa para anular", movimientoOptional.get(), HttpStatus.BAD_REQUEST);
+            }
+            List<AplicacionMovimiento> aplicaciones = movimientoOptional.get()
+                    .getAplicacionesComoDestino().isEmpty()
+                            ? movimientoOptional.get().getAplicacionesComoOrigen()
+                            : movimientoOptional.get().getAplicacionesComoDestino();
+
+            aplicaciones.stream()
+                    .filter(a -> !a.getEstadoAplicacion().equals(EstadoAplicacion.ANULADA))
+                    .forEach(a -> a.setEstadoAplicacion(EstadoAplicacion.ANULADA));
+            
+            movimientoOptional.get().setSaldoPendiente(movimientoOptional.get().getImporte());
+            movimientoOptional.get().setIsApply(Boolean.FALSE);
+            movimientoCuentaCorrienteRepository.save(movimientoOptional.get());
+            return this.buildResponse("OK", "00", "Aplicacion Eliminada", movimientoOptional.get(), HttpStatus.OK);
         } catch (Exception e) {
             log.error(e.getMessage());
-            return this.buildErrorResponse("ERROR", "-01", "OCURRIO UN ERROR EN EL SERVIDOR al registrar el Movimientoi");
+            return this.buildErrorResponse("ERROR", "-01", "OCURRIO UN ERROR EN EL SERVIDOR al anular el Movimientoi");
         }
     }
 
     private MovimientoCuentaCorriente buildRegistrarMovimiento(MovimientoCuentaCorriente movimiento) {
-        movimiento.setFecha(new Date());
+        movimiento.setFecha(LocalDateTime.now());
         MovimientoCuentaCorriente saved = movimientoCuentaCorrienteRepository.save(movimiento);
         if (saved != null) {
             aplicarSiCorresponde(saved);
@@ -149,7 +169,7 @@ public class CuentaCorrienteServiceImpl extends BuildResponsesServicesImpl imple
             aplicacion.setMovimientoOrigen(origen.get());
             aplicacion.setMovimientoDestino(destino.get());
             aplicacion.setImporteAplicado(importeAplicable);
-            aplicacion.setFecha_aplicacion(new Date());
+            aplicacion.setFecha_aplicacion(LocalDateTime.now());
             aplicacionRepository.save(aplicacion);
             this.publicarEventoImporteAplicado(aplicacion);
             return this.buildResponse("OK", "00", "Aplicacion Correcta", aplicacion, HttpStatus.OK);
@@ -199,7 +219,7 @@ public class CuentaCorrienteServiceImpl extends BuildResponsesServicesImpl imple
                 aplicacion.setMovimientoDestino(nuevo);
             }
             aplicacion.setImporteAplicado(aAplicar);
-            aplicacion.setFecha_aplicacion(new Date());
+            aplicacion.setFecha_aplicacion(LocalDateTime.now());
             aplicacion.getMovimientoDestino().setSaldoPendiente(saldoPendiente - aAplicar);
             aplicacion.getMovimientoDestino().setIsApply(true);
             aplicacion.getMovimientoOrigen().setSaldoPendiente(nuevo.getImporte() - aAplicar);
@@ -247,17 +267,17 @@ public class CuentaCorrienteServiceImpl extends BuildResponsesServicesImpl imple
     }
 
     @Override
-    public ResponseEntity<?> getAplicaciones(Long idMovimientoOrigen, Long idMovimientoDestino)  {
+    public ResponseEntity<?> getAplicaciones(Long idMovimientoOrigen, Long idMovimientoDestino) {
         try {
             Optional<MovimientoCuentaCorriente> o = this.movimientoCuentaCorrienteRepository.findById(idMovimientoOrigen != null ? idMovimientoOrigen : idMovimientoDestino);
-            if(o.isEmpty()){
-                 return this.buildResponse("Error", "02", "No Se encontro este mov", null, HttpStatus.BAD_REQUEST);
+            if (o.isEmpty()) {
+                return this.buildResponse("Error", "02", "No Se encontro este mov", null, HttpStatus.BAD_REQUEST);
             }
-            
-            List<AplicacionMovimiento> list = idMovimientoOrigen != null 
-                    ?  this.aplicacionRepository.findAllByMovimientoOrigen(o.get())
+
+            List<AplicacionMovimiento> list = idMovimientoOrigen != null
+                    ? this.aplicacionRepository.findAllByMovimientoOrigen(o.get())
                     : this.aplicacionRepository.findAllByMovimientoDestino(o.get());
-            
+
             if (list.isEmpty()) {
                 return this.buildResponse("Error", "02", "No Se encontro ningun aplicacion a este mov", null, HttpStatus.BAD_REQUEST);
             }
@@ -274,13 +294,13 @@ public class CuentaCorrienteServiceImpl extends BuildResponsesServicesImpl imple
         for (AplicacionMovimiento apply : list) {
             AplicacionResponseDto dto = new AplicacionResponseDto();
             dto.setIdComprobanteOrigen(apply.getMovimientoOrigen() != null ? apply.getMovimientoOrigen().getComprobanteId() : null);
-            dto.setNumeroComprobanteOrigen(apply.getMovimientoOrigen() != null ? apply.getMovimientoOrigen().getNroComprobante(): null);
-            dto.setImporteComprobanteOrigen(apply.getMovimientoOrigen() != null ? apply.getMovimientoOrigen().getImporte(): null);
+            dto.setNumeroComprobanteOrigen(apply.getMovimientoOrigen() != null ? apply.getMovimientoOrigen().getNroComprobante() : null);
+            dto.setImporteComprobanteOrigen(apply.getMovimientoOrigen() != null ? apply.getMovimientoOrigen().getImporte() : null);
             dto.setTipoMovComprobanteOrigen(apply.getMovimientoOrigen() != null ? apply.getMovimientoOrigen().getTipoMovimiento().name() : null);
-            
-             dto.setIdComprobanteDestino(apply.getMovimientoDestino() != null ? apply.getMovimientoDestino().getComprobanteId() : null);
-            dto.setNumeroComprobanteDestino(apply.getMovimientoDestino() != null ? apply.getMovimientoDestino().getNroComprobante(): null);
-            dto.setImporteComprobanteDestino(apply.getMovimientoDestino() != null ? apply.getMovimientoDestino().getImporte(): null);
+
+            dto.setIdComprobanteDestino(apply.getMovimientoDestino() != null ? apply.getMovimientoDestino().getComprobanteId() : null);
+            dto.setNumeroComprobanteDestino(apply.getMovimientoDestino() != null ? apply.getMovimientoDestino().getNroComprobante() : null);
+            dto.setImporteComprobanteDestino(apply.getMovimientoDestino() != null ? apply.getMovimientoDestino().getImporte() : null);
             dto.setTipoMovComprobanteDestino(apply.getMovimientoDestino() != null ? apply.getMovimientoDestino().getTipoMovimiento().name() : null);
             listDto.add(dto);
         }

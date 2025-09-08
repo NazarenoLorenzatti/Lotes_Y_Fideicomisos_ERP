@@ -42,12 +42,13 @@ public class CuentasCorrientesController {
     /**
      * Eliminar conciliacion de Movimientos
      *
+     * @param comprobanteNro
      * @param id
      * @return
      */
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteAplicacion(@PathVariable Long id) {
-        return this.cuentaCorrienteService.deleteAplicacion(id);
+    @GetMapping("/anular/{comprobanteNro}")
+    public ResponseEntity<?> anularAplicacion(@PathVariable String comprobanteNro) {
+        return this.cuentaCorrienteService.anularAplicacion(comprobanteNro);
     }
 
     /**

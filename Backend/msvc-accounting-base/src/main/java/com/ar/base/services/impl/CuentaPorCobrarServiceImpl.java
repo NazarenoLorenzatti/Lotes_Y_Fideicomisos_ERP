@@ -1,5 +1,6 @@
 package com.ar.base.services.impl;
 
+import com.ar.base.clientFeign.ClientFeignContactos;
 import com.ar.base.entities.*;
 import com.ar.base.entities.AsientoContable.TipoOperacion;
 import com.ar.base.entities.CuentaPorCobrar.EstadoCuenta;
@@ -27,7 +28,7 @@ public class CuentaPorCobrarServiceImpl implements iCuentaPorCobrarService {
     private iConciliacionService conciliacionService;
 
     @Autowired
-    private iMovimientoContableDao movimientosDao;
+    private ClientFeignContactos contactosFeign;
     
     @Autowired
     private iApliacionPagoDao aplicacionPagoDao;
@@ -194,10 +195,10 @@ public class CuentaPorCobrarServiceImpl implements iCuentaPorCobrarService {
                      }
                      pagoAplicado.get().setEstado(AplicacionPago.EstadoAplicacion.ANULADA);
                      pagoAplicado.get().setFechaAnulacion(LocalDateTime.now());
+                     aplicacionPagoDao.save(pagoAplicado.get());
                      
             }
-            
-            /*CUENTA CORRIENTE LIBERAR/
+          contactosFeign.anularAplicacion(asiento.getReferenciaExterna());
         }
     }
 

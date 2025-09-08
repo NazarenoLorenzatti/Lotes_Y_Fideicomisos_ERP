@@ -7,6 +7,7 @@ import com.ar.base.repositories.iMovimientoContableDao;
 import com.ar.base.services.iConciliacionService;
 import com.ar.base.services.iCuentaPorPagarService;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;

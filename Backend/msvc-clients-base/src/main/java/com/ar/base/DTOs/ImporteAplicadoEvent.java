@@ -1,5 +1,6 @@
 package com.ar.base.DTOs;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.*;
 
@@ -18,5 +19,5 @@ public class ImporteAplicadoEvent {
 
     private Double importeAplicado;
 
-    private Date fechaSaldado;
+    private LocalDateTime fechaSaldado;
 }

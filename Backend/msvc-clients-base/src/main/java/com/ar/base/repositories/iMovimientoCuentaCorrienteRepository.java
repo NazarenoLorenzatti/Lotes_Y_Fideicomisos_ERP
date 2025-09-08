@@ -3,6 +3,7 @@ package com.ar.base.repositories;
 import com.ar.base.entities.CuentaCorriente;
 import com.ar.base.entities.MovimientoCuentaCorriente;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,4 +26,6 @@ public interface iMovimientoCuentaCorrienteRepository extends JpaRepository<Movi
         @Param("cuentaCorriente") CuentaCorriente cuentaCorriente,
         @Param("tipo") MovimientoCuentaCorriente.TipoMovimiento tipo
     );
+   
+   public Optional<MovimientoCuentaCorriente> findByNroComprobante(String numero);
 }
